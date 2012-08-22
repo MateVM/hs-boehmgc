@@ -1,0 +1,15 @@
+Name:                hs-boehmgc
+Version:             0.1
+Synopsis:            none
+Description:         Haskell bindings for Boehm-Demers-Weiser conservative GC used in MateVM 
+License:             GPL-3
+Author:              Harald Steinlechner, Bernhard Urban
+Maintainer:          Harald Steinlechner <haraldsteinlechner@gmail.com>
+Build-Depends:       base
+cabal-version:       >= 1.2
+build-type:          Simple
+
+library
+  build-depends:       base
+  exposed-modules:     Mate.GC.Boehm
+  hs-source-dirs:      src
