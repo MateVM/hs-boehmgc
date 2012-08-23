@@ -3,7 +3,7 @@
 module Mate.GC.Boehm (
      mallocBytesGC,
      unsafeFreeGC,
-     getHeapSize,
+     getHeapSizeGC,
      initGC,
      addRootGC,
   ) where
@@ -18,38 +18,40 @@ import Foreign.C.Types
 import Control.Monad
 
 foreign import ccall "gc/gc.h GC_malloc"
-   mallocGC :: CSize -> IO (Ptr a) 
+   mallocGC_c :: CSize -> IO (Ptr a) 
 
 foreign import ccall "gc/gc.h GC_get_heap_size"
-   heapSizeGC :: IO CSize
-
+   heapSizeGC_c :: IO CSize
 
 foreign import ccall "gc/gc.h GC_init"
-   initGC :: IO ()
-
+   initGC_c :: IO ()
 
 foreign import ccall "gc/gc.h GC_add_roots"
-   addRootGCInternal :: Ptr a -> Ptr a -> IO ()
+   addRootGCInternal_c :: Ptr a -> Ptr a -> IO ()
 
 -- counts allocated memory in heap
 {-# NOINLINE globalBytesAllocated #-}
 globalBytesAllocated :: IORef Int
 globalBytesAllocated = unsafePerformIO (newIORef 0)
 
+-- |Initializs the GC. Should be called before mallocBytesGC
+initGC :: IO ()
+initGC = initGC_c
+
 #ifdef DEBUG
 -- |Allocates size bytes in managed memory
 mallocBytesGC :: Int -> IO (Ptr a)
 mallocBytesGC size = do
   --print "trying alloc"
-  ptr <- modifyIORef globalBytesAllocated (+ size) >> mallocGC (fromIntegral size)
+  ptr <- modifyIORef globalBytesAllocated (+ size) >> mallocGC_c (fromIntegral size)
   if ptr == nullPtr 
-   then error "alloc 0"
+   then error "mallocBytes asked memory management for memory but returned nullPtr. (see BoehmGC)"
    else return ptr
 
 #else
 -- |Allocates size bytes in managed memory
 mallocBytesGC :: Int -> IO (Ptr a)
-mallocBytesGC = mallocGC . fromIntegral
+mallocBytesGC = mallocGC_c . fromIntegral
 #endif
 
 -- |Explicitely deallocate an object. Not required and dangerous.
@@ -57,8 +59,9 @@ unsafeFreeGC :: Ptr a -> IO ()
 unsafeFreeGC _ = print "not implemented"
 
 -- |Returns currently allocated memory in bytes
-getHeapSize :: IO Int
-getHeapSize = liftM fromIntegral heapSizeGC 
+getHeapSizeGC :: IO Int
+getHeapSizeGC = liftM fromIntegral heapSizeGC_c
 
+-- |Adds a memory segment to be GC root
 addRootGC :: Ptr a -> Ptr a -> IO ()
-addRootGC = addRootGCInternal 
+addRootGC = addRootGCInternal_c
