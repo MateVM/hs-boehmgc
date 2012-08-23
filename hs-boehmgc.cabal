@@ -13,3 +13,7 @@ library
   build-depends:       base
   exposed-modules:     Mate.GC.Boehm
   hs-source-dirs:      src
+  extra-lib-dirs:      /home/hs/Mate/boehmgc/gc/lib/
+  extra-libraries:     gc
+  include-dirs:        /home/hs/Mate/boehmgc/gc/include
+  ld-options: -lgcblub
